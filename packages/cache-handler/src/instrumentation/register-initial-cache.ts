@@ -189,7 +189,7 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
                 cachePath,
                 {
                     // @ts-expect-error
-                    kind: 'ROUTE',
+                    kind: 'APP_ROUTE',
                     body,
                     headers: meta.headers,
                     status: meta.status,

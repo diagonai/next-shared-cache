@@ -783,7 +783,7 @@ export class CacheHandler implements NextCacheHandler {
             implicitTags: softTags,
         });
 
-        if (cachedData?.value?.kind === 'ROUTE') {
+        if (cachedData?.value?.kind === 'ROUTE' || cachedData?.value?.kind === 'APP_ROUTE') {
             cachedData.value.body = Buffer.from(cachedData.value.body as unknown as string, 'base64');
         }
 
@@ -845,7 +845,7 @@ export class CacheHandler implements NextCacheHandler {
                     // replace the body with a base64 encoded string to save space
                     body: value.body.toString('base64') as unknown as Buffer,
                     headers: value.headers,
-                    kind: value.kind,
+                    kind: 'APP_ROUTE',
                     status: value.status,
                 };
 
