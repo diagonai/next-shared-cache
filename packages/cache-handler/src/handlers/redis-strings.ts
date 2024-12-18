@@ -91,7 +91,6 @@ export default function createHandler({
         },
         async set(key, cacheHandlerValue) {
             assertClientIsReady();
-
             // XXX: NextJS 15 hack to get metadata files loading
             if (cacheHandlerValue.value?.kind === "ROUTE") {
                 console.warn("The cache value kind is 'ROUTE'. This is not compatible with Next15, changing to 'APP_ROUTE'");

@@ -266,9 +266,9 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
                 cachePath,
                 {
                     // @ts-expect-error
-                    kind: 'PAGE',
+                    kind: isAppRouter ? 'APP_PAGE' : "PAGE",
                     html,
-                    pageData,
+                    [isAppRouter ? 'rscData' : 'pageData']: pageData,
                     postponed: meta?.postponed,
                     headers: meta?.headers,
                     status: meta?.status,
