@@ -838,8 +838,14 @@ export class CacheHandler implements NextCacheHandler {
 
         switch (value?.kind) {
             case 'PAGE':
+                cacheHandlerValueTags = getTagsFromHeaders(value.headers ?? {});
+                break;
             case 'APP_PAGE': {
                 cacheHandlerValueTags = getTagsFromHeaders(value.headers ?? {});
+                value = {
+                    ...value,
+                    rscData: value.rscData?.toString('base64') as unknown as Buffer,
+                }
                 break;
             }
             case 'APP_ROUTE':

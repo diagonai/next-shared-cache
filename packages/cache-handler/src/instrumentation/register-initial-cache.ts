@@ -262,6 +262,7 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
         }
 
         try {
+            console.log("SETTING CACHE PATH FOR ", isAppRouter ? 'APP_PAGE' : 'PAGE' + " AT ", cachePath);
             await cacheHandler.set(
                 cachePath,
                 {
