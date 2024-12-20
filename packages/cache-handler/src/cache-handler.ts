@@ -787,6 +787,10 @@ export class CacheHandler implements NextCacheHandler {
             cachedData.value.body = Buffer.from(cachedData.value.body as unknown as string, 'base64');
         }
 
+        if (cachedData?.value?.kind === "APP_PAGE") {
+            cachedData.value.rscData = Buffer.from(cachedData.value.rscData as unknown as string, 'base64');
+        }
+
         if (!cachedData && CacheHandler.#fallbackFalseRoutes.has(cacheKey)) {
             cachedData = await CacheHandler.#readPagesRouterPage(cacheKey);
 
