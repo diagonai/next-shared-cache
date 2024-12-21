@@ -2,7 +2,7 @@
 import type { OutgoingHttpHeaders } from 'http';
 import type { CacheHandler, CacheHandlerValue as NextCacheHandlerValue } from 'next/dist/server/lib/incremental-cache';
 import type FileSystemCache from 'next/dist/server/lib/incremental-cache/file-system-cache';
-import type {
+import {
     CachedImageValue,
     CachedRedirectValue,
     CachedRouteKind,
@@ -12,6 +12,7 @@ import type {
     CachedFetchValue as NextCachedFetchValue,
 } from 'next/dist/server/response-cache/types';
 
+export type { CachedRouteKind } from 'next/dist/server/response-cache/types';
 export type { PrerenderManifest } from 'next/dist/build';
 export type { CacheHandler, CacheHandlerContext } from 'next/dist/server/lib/incremental-cache';
 
@@ -26,20 +27,15 @@ export type IncrementalCachedPageValue = ExtractIncrementalCacheKind<
     CachedRouteKind.PAGES
 >;
 
-export type LegacyIncrementalCachedPageValue = Override<IncrementalCachedPageValue, { kind: 'PAGE' }> & {
-    postponed: string | undefined;
-};
-
-export type CachedFetchValue = Override<NextCachedFetchValue, { kind: 'FETCH' }>;
+export type CachedFetchValue = NextCachedFetchValue;
 
 export type IncrementalCacheValue =
     | Override<CachedRedirectValue, { kind: 'REDIRECT' }>
-    | LegacyIncrementalCachedPageValue
     | Override<IncrementalCachedPageValue, { kind: 'PAGES' }>
     | Override<IncrementalCachedAppPageValue, { kind: 'APP_PAGE' }>
     | Override<CachedImageValue, { kind: 'IMAGE' }>
-    | CachedFetchValue
-    | Override<CachedRouteValue, { kind: 'ROUTE' | 'APP_ROUTE' }>;
+    | Override<NextCachedFetchValue, { kind: 'FETCH' }>
+    | Override<CachedRouteValue, { kind: 'APP_ROUTE' }>;
 
 export type IncrementalCacheEntry = {
     curRevalidate?: Revalidate;

@@ -54,7 +54,6 @@ export default function createHandler({
         name: 'redis-strings',
         async get(key, { implicitTags }) {
             assertClientIsReady();
-
             const result = await client.get(getTimeoutRedisCommandOptions(timeoutMs), keyPrefix + key);
 
             if (!result) {
@@ -82,7 +81,6 @@ export default function createHandler({
             for (const timeString of revalidationTimes) {
                 if (timeString && Number.parseInt(timeString, 10) > cacheValue.lastModified) {
                     await client.unlink(getTimeoutRedisCommandOptions(timeoutMs), keyPrefix + key);
-
                     return null;
                 }
             }
@@ -91,11 +89,6 @@ export default function createHandler({
         },
         async set(key, cacheHandlerValue) {
             assertClientIsReady();
-            // XXX: NextJS 15 hack to get metadata files loading
-            if (cacheHandlerValue.value?.kind === "ROUTE") {
-                console.warn("The cache value kind is 'ROUTE'. This is not compatible with Next15, changing to 'APP_ROUTE'");
-                cacheHandlerValue.value.kind = "APP_ROUTE";
-            }
 
             const options = getTimeoutRedisCommandOptions(timeoutMs);
 
@@ -135,7 +128,10 @@ export default function createHandler({
                     ? client.hSet(options, keyPrefix + sharedTagsKey, key, JSON.stringify(cacheHandlerValue.tags))
                     : undefined;
 
-            await Promise.all([setOperation, expireOperation, setTagsOperation]);
+            await Promise.all([setOperation, expireOperation, setTagsOperation]).catch(e => {
+                console.error('Error setting cache value:', e);
+                throw e;
+            });
         },
         async revalidateTag(tag) {
             assertClientIsReady();
@@ -190,7 +186,10 @@ export default function createHandler({
                 tagsToDelete,
             );
 
-            await Promise.all([deleteKeysOperation, updateTagsOperation]);
+            await Promise.all([deleteKeysOperation, updateTagsOperation]).catch(e => {
+                console.error('Error revalidating tag:', e);
+                throw e;
+            });
         },
         async delete(key) {
             await client.unlink(getTimeoutRedisCommandOptions(timeoutMs), key);

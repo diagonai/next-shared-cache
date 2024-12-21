@@ -21,14 +21,6 @@ function calculateObjectSize({ value }: CacheHandlerValue): number {
         case 'PAGES': {
             return value.html.length + (JSON.stringify(value.pageData)?.length || 0);
         }
-
-        case 'PAGE': {
-            const pageDataLength = value.pageData ? JSON.stringify(value.pageData).length : 0;
-
-            return value.html.length + pageDataLength;
-        }
-
-        case 'ROUTE':
         case 'APP_ROUTE': {
             // Size based on the length of the body
             return value.body.length;

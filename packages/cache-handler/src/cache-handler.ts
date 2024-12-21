@@ -9,7 +9,6 @@ import type {
     FileSystemCacheContext,
     IncrementalCacheValue,
     IncrementalCachedPageValue,
-    LegacyIncrementalCachedPageValue,
     LifespanParameters,
     CacheHandler as NextCacheHandler,
     PrerenderManifest,
@@ -22,6 +21,8 @@ import { getTagsFromHeaders } from './helpers/get-tags-from-headers';
 export type { CacheHandlerValue };
 
 const PRERENDER_MANIFEST_VERSION = 4;
+
+type Override<T, U> = Omit<T, keyof U> & U;
 
 /**
  * Represents an internal Next.js metadata for a `get` method.
@@ -401,7 +402,7 @@ export class CacheHandler implements NextCacheHandler {
                 pageHtmlHandle.readFile('utf-8'),
                 pageHtmlHandle.stat(),
                 fsPromises.readFile(pageDataPath, 'utf-8').then((data) => JSON.parse(data) as object),
-                fsPromises.readFile(pageKindPath, 'utf-8').then((data) => data.trim() as 'PAGES' | 'PAGE'),
+                fsPromises.readFile(pageKindPath, 'utf-8').then((data) => data.trim() as 'PAGES'),
             ]);
 
             if (CacheHandler.#debug) {
@@ -422,7 +423,6 @@ export class CacheHandler implements NextCacheHandler {
                     kind: pageKind,
                     html: pageHtmlFile,
                     pageData,
-                    postponed: undefined,
                     headers: undefined,
                     status: undefined,
                 },
@@ -448,7 +448,7 @@ export class CacheHandler implements NextCacheHandler {
 
     static async #writePagesRouterPage(
         cacheKey: string,
-        pageData: IncrementalCachedPageValue | LegacyIncrementalCachedPageValue,
+        pageData: Override<IncrementalCachedPageValue, { kind: "PAGES"}>
     ): Promise<void> {
         try {
             const pageHtmlPath = path.join(CacheHandler.#serverDistDir, 'pages', `${cacheKey}.html`);
@@ -783,11 +783,11 @@ export class CacheHandler implements NextCacheHandler {
             implicitTags: softTags,
         });
 
-        if (cachedData?.value?.kind === 'ROUTE' || cachedData?.value?.kind === 'APP_ROUTE') {
+        if (cachedData?.value?.kind === 'APP_ROUTE') {
             cachedData.value.body = Buffer.from(cachedData.value.body as unknown as string, 'base64');
         }
 
-        if (cachedData?.value?.kind === "APP_PAGE") {
+        if (cachedData?.value?.kind === 'APP_PAGE') {
             cachedData.value.rscData = Buffer.from(cachedData.value.rscData as unknown as string, 'base64');
         }
 
@@ -837,26 +837,24 @@ export class CacheHandler implements NextCacheHandler {
         let value = incrementalCacheValue as IncrementalCacheValue;
 
         switch (value?.kind) {
-            case 'PAGE':
+            case 'PAGES':
                 cacheHandlerValueTags = getTagsFromHeaders(value.headers ?? {});
                 break;
             case 'APP_PAGE': {
                 cacheHandlerValueTags = getTagsFromHeaders(value.headers ?? {});
                 value = {
                     ...value,
+                    // replace the body with a base64 encoded string to save space
                     rscData: value.rscData?.toString('base64') as unknown as Buffer,
                 }
                 break;
             }
-            case 'APP_ROUTE':
-            case 'ROUTE': {
+            case 'APP_ROUTE': {
                 // create a new object to avoid mutating the original value
                 value = {
+                    ...value,
                     // replace the body with a base64 encoded string to save space
                     body: value.body.toString('base64') as unknown as Buffer,
-                    headers: value.headers,
-                    kind: 'APP_ROUTE',
-                    status: value.status,
                 };
 
                 break;
@@ -875,11 +873,8 @@ export class CacheHandler implements NextCacheHandler {
 
         await CacheHandler.#mergedHandler.set(cacheKey, cacheHandlerValue);
 
-        if (
-            hasFallbackFalse &&
-            (cacheHandlerValue.value?.kind === 'PAGE' || cacheHandlerValue.value?.kind === 'PAGES')
-        ) {
-            // @ts-expect-error
+        if (hasFallbackFalse && cacheHandlerValue.value?.kind === "PAGES") {
+            cacheHandlerValue
             await CacheHandler.#writePagesRouterPage(cacheKey, cacheHandlerValue.value);
         }
     }

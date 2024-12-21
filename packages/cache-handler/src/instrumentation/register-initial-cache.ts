@@ -1,6 +1,6 @@
 import { promises as fsPromises } from 'node:fs';
 import path from 'node:path';
-import type { CachedFetchValue, Revalidate, RouteMetadata } from '@repo/next-common';
+import { CachedRouteKind, type CachedFetchValue, type Revalidate, type RouteMetadata } from '@repo/next-common';
 import { PRERENDER_MANIFEST, SERVER_DIRECTORY } from 'next/constants';
 import type { PrerenderManifest } from 'next/dist/build';
 import { CACHE_ONE_YEAR } from 'next/dist/lib/constants';
@@ -183,13 +183,11 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
 
             return;
         }
-
         try {
             await cacheHandler.set(
                 cachePath,
                 {
-                    // @ts-expect-error
-                    kind: 'APP_ROUTE',
+                    kind: 'APP_ROUTE' as CachedRouteKind.APP_ROUTE,
                     body,
                     headers: meta.headers,
                     status: meta.status,
@@ -262,20 +260,33 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
         }
 
         try {
-            console.log("SETTING CACHE PATH FOR ", isAppRouter ? 'APP_PAGE' : 'PAGE' + " AT ", cachePath);
-            await cacheHandler.set(
-                cachePath,
-                {
-                    // @ts-expect-error
-                    kind: isAppRouter ? 'APP_PAGE' : "PAGE",
-                    html,
-                    [isAppRouter ? 'rscData' : 'pageData']: pageData,
-                    postponed: meta?.postponed,
-                    headers: meta?.headers,
-                    status: meta?.status,
-                },
-                { revalidate, neshca_lastModified: lastModified },
-            );
+            if (isAppRouter) {
+                await cacheHandler.set(
+                    cachePath,
+                    {
+                        kind: 'APP_PAGE' as CachedRouteKind.APP_PAGE,
+                        html,
+                        rscData: pageData as Buffer,
+                        postponed: meta?.postponed,
+                        headers: meta?.headers,
+                        status: meta?.status,
+                        segmentData: undefined, // TODO: Add support for segment data
+                    },
+                    { revalidate, neshca_lastModified: lastModified },
+                );
+            } else {
+                await cacheHandler.set(
+                    cachePath,
+                    {
+                        kind: 'PAGES' as CachedRouteKind.PAGES,
+                        html,
+                        pageData: pageData as object,
+                        headers: meta?.headers,
+                        status: meta?.status,
+                    },
+                    { revalidate, neshca_lastModified: lastModified },
+                );
+            }
         } catch (error) {
             if (debug) {
                 console.warn(
@@ -363,7 +374,6 @@ export async function registerInitialCache(CacheHandler: CacheHandlerType, optio
         const revalidate = fetchCache.revalidate === CACHE_ONE_YEAR ? false : fetchCache.revalidate;
 
         try {
-            // @ts-expect-error
             await cacheHandler.set(fetchCacheKey, fetchCache, {
                 revalidate,
                 neshca_lastModified: lastModified,
