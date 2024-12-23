@@ -2,7 +2,7 @@
 import type { OutgoingHttpHeaders } from 'http';
 import type { CacheHandler, CacheHandlerValue as NextCacheHandlerValue } from 'next/dist/server/lib/incremental-cache';
 import type FileSystemCache from 'next/dist/server/lib/incremental-cache/file-system-cache';
-import {
+import type {
     CachedImageValue,
     CachedRedirectValue,
     CachedRouteKind,
@@ -30,12 +30,12 @@ export type IncrementalCachedPageValue = ExtractIncrementalCacheKind<
 export type CachedFetchValue = NextCachedFetchValue;
 
 export type IncrementalCacheValue =
-    | Override<CachedRedirectValue, { kind: 'REDIRECT' }>
-    | Override<IncrementalCachedPageValue, { kind: 'PAGES' }>
-    | Override<IncrementalCachedAppPageValue, { kind: 'APP_PAGE' }>
-    | Override<CachedImageValue, { kind: 'IMAGE' }>
-    | Override<NextCachedFetchValue, { kind: 'FETCH' }>
-    | Override<CachedRouteValue, { kind: 'APP_ROUTE' }>;
+    | CachedRedirectValue
+    | IncrementalCachedPageValue
+    | IncrementalCachedAppPageValue
+    | CachedImageValue
+    | NextCachedFetchValue
+    | CachedRouteValue;
 
 export type IncrementalCacheEntry = {
     curRevalidate?: Revalidate;

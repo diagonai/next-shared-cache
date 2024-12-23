@@ -34,7 +34,6 @@ function calculateObjectSize({ value }: CacheHandlerValue): number {
             throw new Error('Image kind should not be used for incremental-cache calculations.');
         }
         default: {
-            // @ts-expect-error
             throw new Error(`Invalid kind: ${value.kind}`);
         }
     }

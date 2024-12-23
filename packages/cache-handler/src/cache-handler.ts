@@ -6,6 +6,7 @@ import type {
     CacheHandlerParametersRevalidateTag,
     CacheHandlerParametersSet,
     CacheHandlerValue,
+    CachedRouteKind,
     FileSystemCacheContext,
     IncrementalCacheValue,
     IncrementalCachedPageValue,
@@ -402,7 +403,7 @@ export class CacheHandler implements NextCacheHandler {
                 pageHtmlHandle.readFile('utf-8'),
                 pageHtmlHandle.stat(),
                 fsPromises.readFile(pageDataPath, 'utf-8').then((data) => JSON.parse(data) as object),
-                fsPromises.readFile(pageKindPath, 'utf-8').then((data) => data.trim() as 'PAGES'),
+                fsPromises.readFile(pageKindPath, 'utf-8').then((data) => data.trim() as CachedRouteKind.PAGES),
             ]);
 
             if (CacheHandler.#debug) {
@@ -760,11 +761,9 @@ export class CacheHandler implements NextCacheHandler {
         }
     }
 
-    // @ts-expect-error
     async get(
         cacheKey: CacheHandlerParametersGet[0],
-        // @ts-expect-error
-        ctx: CacheHandlerParametersGet[1] = {},
+        ctx: CacheHandlerParametersGet[1],
     ): Promise<CacheHandlerValue | null> {
         await CacheHandler.#configureCacheHandler();
 
@@ -874,7 +873,6 @@ export class CacheHandler implements NextCacheHandler {
         await CacheHandler.#mergedHandler.set(cacheKey, cacheHandlerValue);
 
         if (hasFallbackFalse && cacheHandlerValue.value?.kind === "PAGES") {
-            cacheHandlerValue
             await CacheHandler.#writePagesRouterPage(cacheKey, cacheHandlerValue.value);
         }
     }
